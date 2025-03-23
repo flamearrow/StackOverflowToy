@@ -25,7 +25,8 @@ struct StackOverflowToyApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+//            ContentView()
+            UserList()
         }
         .modelContainer(sharedModelContainer)
     }
