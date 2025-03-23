@@ -27,7 +27,7 @@ struct StackOverflowToyApp: App {
         WindowGroup {
 //            ContentView()
 //            UserList()
-            UserDetail(user: .testUser1)
+            UserDetail(user: .testUser2)
         }
         .modelContainer(sharedModelContainer)
     }

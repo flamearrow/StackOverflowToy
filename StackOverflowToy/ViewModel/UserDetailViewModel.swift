@@ -17,8 +17,11 @@ import Vision
     
     private var imageBuffer: CVPixelBuffer?
     
-    init(user: User) {
+    private let faceDetector: FaceDetectorProtocol
+    
+    init(user: User, faceDetector: FaceDetectorProtocol = FaceDetector()) {
         self.user = user
+        self.faceDetector = faceDetector
     }
     
     @MainActor func setImage(_ image: Image) {
@@ -33,14 +36,14 @@ import Vision
         
         isProcessing = true
         error = nil
-        result = nil
+        result = ""
         
-        do {
-            try await Task.sleep(for: .seconds(2))
-            result = "success! has face"
-        } catch {
-            self.error = error
+        let detectResult = await faceDetector.detectFaces(in: imageBuffer)
+        print("result: \(detectResult)")
+        detectResult.map(\.description).forEach {
+            result! += $0
         }
+        
         
         isProcessing = false
     }
