@@ -11,16 +11,21 @@ struct UserList: View {
     @State var vm = UserListViewModel()
     
     var body: some View {
-       NavigationStack {
-           List(vm.users) { user in
-               NavigationLink(value: user) {
-                   UserRow(user: user)
-               }
-           }
-           .navigationDestination(for: User.self) { user in
-               UserDetail(user: user)
-           }
-       }
+        VStack {
+            Button("Reload") {
+                vm.fetchUsers(page: 1)
+            }
+            NavigationStack {
+                List(vm.users) { user in
+                    NavigationLink(value: user) {
+                        UserRow(user: user)
+                    }
+                }
+                .navigationDestination(for: User.self) { user in
+                    UserDetail(user: user)
+                }
+            }
+        }
     }
 }
 
