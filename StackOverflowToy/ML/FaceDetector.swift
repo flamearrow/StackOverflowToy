@@ -8,6 +8,7 @@
 import Vision
 
 protocol FaceDetectorProtocol {
+    @MainActor
     func detectFaces(in image: CVPixelBuffer) async -> [VNFaceObservation]
 }
 

@@ -12,5 +12,6 @@ struct ErrorView: View {
     let error: Error
     var body: some View {
         Text("Error: \(error.localizedDescription)")
+            .foregroundColor(.red)
     }
 }
