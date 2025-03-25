@@ -10,8 +10,22 @@ import SwiftUI
 
 struct ErrorView: View {
     let error: Error
+    
     var body: some View {
-        Text("Error: \(error.localizedDescription)")
-            .foregroundColor(.red)
+        VStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 200))
+                .foregroundColor(.red)
+            
+            Text("Error")
+                .font(.headline)
+                .foregroundColor(.red)
+            
+            Text(error.localizedDescription)
+                .font(.body)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding()
     }
 }

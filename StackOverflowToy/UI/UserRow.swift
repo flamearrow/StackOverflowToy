@@ -35,13 +35,12 @@ struct UserRow: View {
                         .profileImageStyle()
                         .foregroundColor(.gray)
                 }
-            }
-            
-            Spacer()
+            }.padding(.trailing, 20)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(user.display_name)
                     .font(.headline)
+                    .foregroundColor(.primary)
                 
                 Label("\(user.reputation)", systemImage: "star.fill")
                     .foregroundColor(.orange)

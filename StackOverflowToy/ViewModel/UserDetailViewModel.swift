@@ -12,7 +12,7 @@ import Vision
 private enum UserDetailError: LocalizedError {
     case imageConversionFailed
     case noImageAvailable
-    case incorrectViewStateError
+    case incorrectViewStateError(required: String, actual: String)
     
     var errorDescription: String? {
         switch self {
@@ -20,16 +20,16 @@ private enum UserDetailError: LocalizedError {
             return NSLocalizedString("Failed to convert image", comment: "Error when image conversion fails")
         case .noImageAvailable:
             return NSLocalizedString("No image available", comment: "Error when trying to process without an image")
-        case .incorrectViewStateError:
-            return NSLocalizedString("Invalid view state", comment: "Error when view state is incorrect")
+        case .incorrectViewStateError(let required, let actual):
+            return NSLocalizedString("Invalid state: required \(required), got \(actual)", comment: "Error when view state is incorrect")
         }
     }
 }
 
 @Observable class UserDetailViewModel {
     
-    var viewState: UserDetailViewState
-
+    private(set) var viewState: UserDetailViewState
+    
     private let faceDetector: FaceDetectorProtocol
     
     init(user: User, faceDetector: FaceDetectorProtocol = FaceDetector()) {
@@ -37,10 +37,18 @@ private enum UserDetailError: LocalizedError {
         self.faceDetector = faceDetector
     }
     
+    func reset(user: User) {
+        self.viewState = .loading(user: user)
+    }
+    
     @MainActor func setImage(_ image: Image) {
         guard case .loading(let user) = viewState else {
-            print("current state is not loaded, but got \(String(describing: viewState))")
-            viewState = .error(errr: UserDetailError.incorrectViewStateError)
+            viewState = .error(
+                user: viewState.getUser(),
+                error: UserDetailError.incorrectViewStateError(
+                    required: "loading", actual: "type(of: viewState)"
+                )
+            )
             return
         }
         
@@ -48,9 +56,19 @@ private enum UserDetailError: LocalizedError {
     }
     
     @MainActor func processImage() async {
-        guard case .loaded(let user, let image) = viewState else {
-            print("current state is not loaded, but \(String(describing: viewState))")
-            viewState = .error(errr: UserDetailError.incorrectViewStateError)
+        let (user, image): (User, Image)
+        switch(viewState) {
+        case .loaded(let u, let i):
+            (user, image) = (u, i)
+        case .result(let u, let i, _, _):
+            (user, image) = (u, i)
+        default:
+            viewState = .error(
+                user: viewState.getUser(),
+                error: UserDetailError.incorrectViewStateError(
+                    required: "loaded or result", actual: viewState.name()
+                )
+            )
             return
         }
         
@@ -78,7 +96,25 @@ private enum UserDetailError: LocalizedError {
                 )
             }
         } catch {
-            viewState = .error(errr: error)
+            viewState = .error(user: user, error: error)
+        }
+    }
+}
+
+// MARK: - extensions
+private extension UserDetailViewState {
+    func name() -> String {
+        switch(self) {
+        case .loading(user: _):
+            "loading"
+        case .loaded(user: _, image: _):
+            "loaded"
+        case .processing(user: _, image: _):
+            "processing"
+        case .result(user: _, image: _, confidence: _, boundingBox: _):
+            "result"
+        case .error(user: _, error: _):
+            "error"
         }
     }
 }
