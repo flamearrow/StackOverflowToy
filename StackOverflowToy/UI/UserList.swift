@@ -60,7 +60,6 @@ private struct UserListStateView: View {
                             .listRowSeparator(.hidden)
                             .onAppear {
                                 if(user.id == users.last?.id) {
-                                    print("BGLM - should load more!")
                                     onGetMoreUser()
                                 }
                             }

@@ -32,6 +32,11 @@ class TopUserFetcher: TopUserFetcherProtocol {
             .getTopUsers(page: page, pageSize: pageSize)
         )
         .map(UserResponse.self)
+        .handleEvents(receiveCompletion: { completion in
+            if case .failure(let error) = completion {
+                print("Error fetching users: \(error.localizedDescription)")
+            }
+        })
         .eraseToAnyPublisher()
     }
     

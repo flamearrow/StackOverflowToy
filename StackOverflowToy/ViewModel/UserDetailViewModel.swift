@@ -41,7 +41,11 @@ private enum UserDetailError: LocalizedError {
         self.viewState = .loading(user: user)
     }
     
-    @MainActor func setImage(_ image: Image) {
+    func onError(user: User, error: Error) {
+        self.viewState = .error(user: user, error: error)
+    }
+    
+    func setImage(_ image: Image) {
         guard case .loading(let user) = viewState else {
             viewState = .error(
                 user: viewState.getUser(),

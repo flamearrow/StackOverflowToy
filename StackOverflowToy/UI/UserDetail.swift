@@ -30,6 +30,9 @@ struct UserDetail: View {
                 },
                 onReset: { user in
                     viewModel?.reset(user: user)
+                },
+                onError: { error in
+                    viewModel?.onError(user: user, error: error)
                 }
             )
         }
@@ -45,6 +48,7 @@ struct UserDetailStateView: View {
     let onProcess: () async -> Void
     let onImageLoaded: (Image) async -> Void
     let onReset: (User) -> Void
+    let onError: (Error) -> Void
     
     var body: some View {
         Group {
@@ -53,15 +57,23 @@ struct UserDetailStateView: View {
             }
             switch state {
             case .loading(let user):
-                AsyncImage(url: .init(string: user.profile_image)) { image in
-                    image
-                        .userDetailMainImageFrame()
-                        .task {
+                AsyncImage(url: .init(string: user.profile_image)) { phase in
+                    if let image = phase.image {
+                        image.userDetailMainImageFrame().task {
                             await onImageLoaded(image)
                         }
-                } placeholder: {
-                    ProgressView()
+                    } else if let error = phase.error {
+                        Image(systemName: "exclamationmark.circle.fill")
+                            .foregroundColor(.red)
+                            .task {
+                                onError(error)
+                            }
+                    } else {
+                        Image(systemName: "person.circle.fill")
+                            .foregroundColor(.gray)
+                    }
                 }
+                
                 
             case .loaded(_, let image):
                 VStack(spacing: 20) {
@@ -210,7 +222,8 @@ enum UserDetailViewState {
         state: .loading(user: .testUser1),
         onProcess: {},
         onImageLoaded: { _ in },
-        onReset: { _ in }
+        onReset: { _ in },
+        onError: { _ in }
     )
 }
 
@@ -219,7 +232,8 @@ enum UserDetailViewState {
         state: .loaded(user: .testUser1, image: Image(systemName: "person")),
         onProcess: {},
         onImageLoaded: { _ in },
-        onReset: { _ in }
+        onReset: { _ in },
+        onError: { _ in }
     )
 }
 
@@ -228,7 +242,8 @@ enum UserDetailViewState {
         state: .processing(user: .testUser1, image: Image(systemName: "person")),
         onProcess: {},
         onImageLoaded: { _ in },
-        onReset: { _ in }
+        onReset: { _ in },
+        onError: { _ in }
     )
 }
 
@@ -242,7 +257,8 @@ enum UserDetailViewState {
         ),
         onProcess: {},
         onImageLoaded: { _ in },
-        onReset: { _ in }
+        onReset: { _ in },
+        onError: { _ in }
     )
 }
 
@@ -257,7 +273,8 @@ enum UserDetailViewState {
         ),
         onProcess: {},
         onImageLoaded: { _ in },
-        onReset: { _ in }
+        onReset: { _ in },
+        onError: { _ in }
     )
 }
 
@@ -273,6 +290,7 @@ enum UserDetailViewState {
         ),
         onProcess: {},
         onImageLoaded: { _ in },
-        onReset: { _ in }
+        onReset: { _ in },
+        onError: { _ in }
     )
 }
