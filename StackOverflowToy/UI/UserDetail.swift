@@ -8,28 +8,35 @@
 import SwiftUI
 
 struct UserDetail: View {
-    @State private var viewModel: UserDetailViewModel
+    @EnvironmentObject var globalDependencies: GlobalDependencies
+    
+    @State private var viewModel: UserDetailViewModel?
+    
+    private let user: User
     
     init(user: User) {
-        _viewModel = State(initialValue: UserDetailViewModel(user: user))
+        self.user = user
     }
     
     var body: some View {
         VStack {
             UserDetailStateView(
-                state: viewModel.viewState,
+                state: viewModel?.viewState ?? .loading(user: user),
                 onProcess: {
-                    await viewModel.processImage()
+                    await viewModel?.processImage()
                 },
                 onImageLoaded: { image in
-                    viewModel.setImage(image)
+                    viewModel?.setImage(image)
                 },
                 onReset: { user in
-                    viewModel.reset(user: user)
+                    viewModel?.reset(user: user)
                 }
             )
         }
         .padding()
+        .onAppear {
+            viewModel = UserDetailViewModel(user: user, faceDetector: globalDependencies.faceDetector)
+        }
     }
 }
 
@@ -40,7 +47,6 @@ struct UserDetailStateView: View {
     let onReset: (User) -> Void
     
     var body: some View {
-        
         Group {
             if let name = state.getUser()?.display_name {
                 Text(name).font(.largeTitle)
@@ -84,7 +90,7 @@ struct UserDetailStateView: View {
                     .foregroundColor(.secondary)
                 }
                 
-            case .result(_, let image, let confidence, let boundingBox):
+            case .result(let user, let image, let confidence, let boundingBox):
                 VStack(spacing: 20) {
                     if let boundingBox = boundingBox, let confidence = confidence {
                         image.userDetailMainImageFrame()
@@ -110,9 +116,7 @@ struct UserDetailStateView: View {
                     }
                     
                     Button("Detect Again") {
-                        Task {
-                            await onProcess()
-                        }
+                        onReset(user)
                     }
                     .buttonStyle(PrimaryButtonStyle(icon: "arrow.clockwise"))
                 }

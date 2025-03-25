@@ -10,7 +10,11 @@ import Combine
 import CombineMoya
 
 @Observable class UserListViewModel {
-    let topUserFetcher = TopUserFetcher()
+    let topUserFetcher: TopUserFetcherProtocol
+    
+    init(topUserFetcher: TopUserFetcherProtocol) {
+        self.topUserFetcher = topUserFetcher
+    }
     
     private(set) var state: UserListViewState = .idle
     

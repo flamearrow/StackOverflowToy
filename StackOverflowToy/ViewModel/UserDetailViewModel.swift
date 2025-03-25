@@ -32,7 +32,7 @@ private enum UserDetailError: LocalizedError {
     
     private let faceDetector: FaceDetectorProtocol
     
-    init(user: User, faceDetector: FaceDetectorProtocol = FaceDetector()) {
+    init(user: User, faceDetector: FaceDetectorProtocol) {
         self.viewState = .loading(user: user)
         self.faceDetector = faceDetector
     }

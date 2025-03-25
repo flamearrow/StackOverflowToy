@@ -8,15 +8,19 @@
 import SwiftUI
 
 struct UserList: View {
-    @State var vm = UserListViewModel()
+    @EnvironmentObject var globalDependencies: GlobalDependencies
     
+    @State var vm: UserListViewModel?
+
     var body: some View {
         UserListStateView(
-            state: vm.state,
+            state: vm?.state ?? .idle,
             onGetMoreUser: {
-                vm.fetchUsers()
+                vm?.fetchUsers()
             }
-        )
+        ).onAppear {
+            vm = UserListViewModel(topUserFetcher: globalDependencies.topUserFetcher)
+        }
     }
 }
 

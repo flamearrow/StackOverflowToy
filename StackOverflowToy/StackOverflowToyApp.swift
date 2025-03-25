@@ -26,6 +26,7 @@ struct StackOverflowToyApp: App {
     var body: some Scene {
         WindowGroup {
             UserList()
+                .environmentObject(GlobalDependencies.shared)
         }
         .modelContainer(sharedModelContainer)
     }

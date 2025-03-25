@@ -13,6 +13,8 @@ protocol FaceDetectorProtocol {
 }
 
 struct FaceDetector : FaceDetectorProtocol {
+    static let shared = FaceDetector()
+    
     private let faceDetectionRequest = VNDetectFaceRectanglesRequest()
     private let faceDetectionHandler = VNSequenceRequestHandler()
     

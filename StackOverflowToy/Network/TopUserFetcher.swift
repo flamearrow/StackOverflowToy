@@ -10,12 +10,18 @@ import Moya
 import CombineMoya
 import Combine
 
-class TopUserFetcher {
+protocol TopUserFetcherProtocol {
+    func fetchTopUsers(page: Int) -> AnyPublisher<UserResponse, MoyaError>
+}
+
+class TopUserFetcher: TopUserFetcherProtocol {
+    static let shared = TopUserFetcher(pageSize: defaultPageSize)
+    
     static let defaultPageSize = 10
     
     let pageSize: Int
     
-    init(pageSize: Int = defaultPageSize) {
+    init(pageSize: Int) {
         self.pageSize = pageSize
     }
     
