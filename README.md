@@ -9,7 +9,7 @@ A SwiftUI application that demonstrates modern iOS development practices by fetc
 git clone https://github.com/flamearrow/StackOverflowToy.git
 ```
 
-2. Open the project in Xcode 15.0 or later(developed in 16.2):
+2. Open the project in Xcode 15.0 or later(developed in 16.2, tested on a physical iPhone 14 Pro/iOS 18.3.1 and an emulator iPhone 16 Pro/iOS 18.2)
 
 3. Build and run the project (⌘R) or use the Play button in Xcode
   * Click the Load Top Users to fetch the first 10 users
