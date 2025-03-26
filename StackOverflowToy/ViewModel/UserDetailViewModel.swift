@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 import Vision
 
-private enum UserDetailError: LocalizedError {
+enum UserDetailError: LocalizedError {
     case imageConversionFailed
     case noImageAvailable
     case incorrectViewStateError(required: String, actual: String)
@@ -59,7 +59,7 @@ private enum UserDetailError: LocalizedError {
         viewState = .loaded(user: user, image: image)
     }
     
-    @MainActor func processImage() async {
+    func processImage() async {
         let (user, image): (User, Image)
         switch(viewState) {
         case .loaded(let u, let i):
@@ -67,46 +67,54 @@ private enum UserDetailError: LocalizedError {
         case .result(let u, let i, _, _):
             (user, image) = (u, i)
         default:
-            viewState = .error(
-                user: viewState.getUser(),
-                error: UserDetailError.incorrectViewStateError(
-                    required: "loaded or result", actual: viewState.name()
+            await MainActor.run {
+                viewState = .error(
+                    user: viewState.getUser(),
+                    error: UserDetailError.incorrectViewStateError(
+                        required: "loaded or result", actual: viewState.name()
+                    )
                 )
-            )
+            }
             return
         }
         
-        viewState = .processing(user: user, image: image)
+        await MainActor.run {
+            viewState = .processing(user: user, image: image)
+        }
         
         do {
-            guard let uiImage = image.asUIImage(), let buffer = uiImage.toPixelBuffer() else {
+            guard let uiImage = await image.asUIImage(), let buffer = uiImage.toPixelBuffer() else {
                 throw UserDetailError.imageConversionFailed
             }
             
             let detectResult = await faceDetector.detectFaces(in: buffer)
-            if let firstFace = detectResult.first {
-                viewState = .result(
-                    user: user,
-                    image: image,
-                    confidence: Double(firstFace.confidence),
-                    boundingBox: firstFace.boundingBox
-                )
-            } else {
-                viewState = .result(
-                    user: user,
-                    image: image,
-                    confidence: nil,
-                    boundingBox: nil
-                )
+            await MainActor.run {
+                if let firstFace = detectResult.first {
+                    viewState = .result(
+                        user: user,
+                        image: image,
+                        confidence: Double(firstFace.confidence),
+                        boundingBox: firstFace.boundingBox
+                    )
+                } else {
+                    viewState = .result(
+                        user: user,
+                        image: image,
+                        confidence: nil,
+                        boundingBox: nil
+                    )
+                }
             }
         } catch {
-            viewState = .error(user: user, error: error)
+            await MainActor.run {
+                viewState = .error(user: user, error: error)
+            }
         }
     }
 }
 
 // MARK: - extensions
-private extension UserDetailViewState {
+extension UserDetailViewState {
     func name() -> String {
         switch(self) {
         case .loading(user: _):

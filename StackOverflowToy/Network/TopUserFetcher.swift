@@ -9,6 +9,7 @@ import Foundation
 import Moya
 import CombineMoya
 import Combine
+import OSLog
 
 protocol TopUserFetcherProtocol {
     func fetchTopUsers(page: Int) -> AnyPublisher<UserResponse, MoyaError>
@@ -34,7 +35,7 @@ class TopUserFetcher: TopUserFetcherProtocol {
         .map(UserResponse.self)
         .handleEvents(receiveCompletion: { completion in
             if case .failure(let error) = completion {
-                print("Error fetching users: \(error.localizedDescription)")
+                Logger.topUserFetcher.log("Error fetching users: \(error.localizedDescription)")
             }
         })
         .eraseToAnyPublisher()

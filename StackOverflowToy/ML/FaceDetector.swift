@@ -8,8 +8,6 @@
 import Vision
 import OSLog
 protocol FaceDetectorProtocol {
-    // CVPixelBuffer needs to be passed to MainActor since it's not Sendable
-    @MainActor
     func detectFaces(in image: CVPixelBuffer) async -> [VNFaceObservation]
 }
 
@@ -20,29 +18,30 @@ struct FaceDetector : FaceDetectorProtocol {
     private let faceDetectionHandler = VNSequenceRequestHandler()
     
     func detectFaces(in image: CVPixelBuffer) async -> [VNFaceObservation] {
-        do {
-            #if targetEnvironment(simulator)
-                if #available(iOS 17.0, *) {
-                  let allDevices = MLComputeDevice.allComputeDevices
-
-                  for device in allDevices {
-                    if(device.description.contains("MLCPUComputeDevice")){
-                        faceDetectionRequest.setComputeDevice(.some(device), for: .main)
-                      break
+        return await withCheckedContinuation { continuation in
+            Task {
+                do {
+                    #if targetEnvironment(simulator)
+                    if #available(iOS 17.0, *) {
+                        let allDevices = MLComputeDevice.allComputeDevices
+                        
+                        for device in allDevices {
+                            if device.description.contains("MLCPUComputeDevice") {
+                                faceDetectionRequest.setComputeDevice(.some(device), for: .main)
+                                break
+                            }
+                        }
+                    } else {
+                        faceDetectionRequest.usesCPUOnly = true
                     }
-                  }
-
-                } else {
-                  // Fallback on earlier versions
-                    faceDetectionRequest.usesCPUOnly = true
+                    #endif
+                    try self.faceDetectionHandler.perform([self.faceDetectionRequest], on: image)
+                    continuation.resume(returning: faceDetectionRequest.results ?? [])
+                } catch {
+                    Logger.faceDetector.error("Failed to detect faces: \(error)")
+                    continuation.resume(returning: [])
                 }
-            #endif
-            
-            try faceDetectionHandler.perform([faceDetectionRequest], on: image)
-            return faceDetectionRequest.results ?? []
-        } catch {
-            Logger.faceDetector.error("Failed to detect faces: \(error)")
-            return []
+            }
         }
     }
 }

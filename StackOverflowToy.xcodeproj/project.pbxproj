@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		222846512D93900300783E15 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 222846502D938FFC00783E15 /* README.md */; };
 		227484422D8FD17900C3BA77 /* CombineMoya in Frameworks */ = {isa = PBXBuildFile; productRef = 227484412D8FD17900C3BA77 /* CombineMoya */; };
 		227484442D8FD17900C3BA77 /* Moya in Frameworks */ = {isa = PBXBuildFile; productRef = 227484432D8FD17900C3BA77 /* Moya */; };
 /* End PBXBuildFile section */
@@ -29,6 +30,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		222846502D938FFC00783E15 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		227483922D8F2C2B00C3BA77 /* StackOverflowToy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StackOverflowToy.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		227483A42D8F2C2C00C3BA77 /* StackOverflowToyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StackOverflowToyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		227483AE2D8F2C2C00C3BA77 /* StackOverflowToyUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StackOverflowToyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -82,6 +84,7 @@
 		227483892D8F2C2B00C3BA77 = {
 			isa = PBXGroup;
 			children = (
+				222846502D938FFC00783E15 /* README.md */,
 				227483942D8F2C2B00C3BA77 /* StackOverflowToy */,
 				227483A72D8F2C2C00C3BA77 /* StackOverflowToyTests */,
 				227483B12D8F2C2C00C3BA77 /* StackOverflowToyUITests */,
@@ -224,6 +227,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				222846512D93900300783E15 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

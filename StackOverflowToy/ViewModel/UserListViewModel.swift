@@ -40,16 +40,22 @@ import OSLog
         
         Logger.userListViewModel.info("Fetching page \(nextPage)")
         state = .loading(prevUsers)
+        
         Task.detached(priority: .userInitiated) {
             self.topUserFetcher
                 .fetchTopUsers(page: nextPage)
-                .receive(on: DispatchQueue.main)
+                // Use explicit MainActor Task to update view state
+                // .receive(on: DispatchQueue.main)
                 .sink { completion in
-                    guard case .failure(let error) = completion else {return}
-                    self.state = .error(error.localizedDescription)
+                    guard case .failure(let error) = completion else { return }
+                    Task { @MainActor in
+                        self.state = .error(error.localizedDescription)
+                    }
                 } receiveValue: { [weak self] userResponse in
                     Logger.userListViewModel.info("Got resposne for page \(nextPage), hasMore: \(userResponse.has_more), quota_remaining: \(userResponse.quota_remaining), quota_max: \(userResponse.quota_max)")
-                    self?.state = .result(prevUsers + userResponse.items, nextPage, userResponse.has_more)
+                    Task { @MainActor in
+                        self?.state = .result(prevUsers + userResponse.items, nextPage, userResponse.has_more)
+                    }
                 }
                 .store(in: &self.cancellables)
         }
