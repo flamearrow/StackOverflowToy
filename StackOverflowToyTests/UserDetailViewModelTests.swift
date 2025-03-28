@@ -8,11 +8,11 @@ final class MockFaceDetector: FaceDetectorProtocol {
     var shouldSucceed = true
     var mockResult: [VNFaceObservation] = []
     
-    func detectFaces(in image: CVPixelBuffer) async -> [VNFaceObservation] {
+    func detectFaces(in image: CVPixelBuffer) async throws -> [VNFaceObservation] {
         if shouldSucceed {
             return mockResult
         } else {
-            return []
+            throw NSError(domain: "test", code: 0)
         }
     }
 }
@@ -70,7 +70,6 @@ final class UserDetailViewModelTests: XCTestCase {
     func testFailedFaceDetection() async {
         // Given
         mockFaceDetector.shouldSucceed = false
-        sut.setImage(Image(systemName: "person.circle.fill"))
         
         // When
         await sut.processImage()
@@ -79,7 +78,7 @@ final class UserDetailViewModelTests: XCTestCase {
         XCTAssertEqual(sut.viewState.name(), "error")
         if case .error(let user, let error) = sut.viewState {
             XCTAssertEqual(user?.id, User.testUser1.id)
-            XCTAssertTrue(error is UserDetailError)
+            XCTAssertTrue(error.localizedDescription.contains("Error running faceDetector"))
         } else {
             XCTFail("Expected error state")
         }

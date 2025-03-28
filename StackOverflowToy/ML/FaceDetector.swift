@@ -8,7 +8,7 @@
 import Vision
 import OSLog
 protocol FaceDetectorProtocol {
-    func detectFaces(in image: CVPixelBuffer) async -> [VNFaceObservation]
+    func detectFaces(in image: CVPixelBuffer) async throws -> [VNFaceObservation]
 }
 
 struct FaceDetector : FaceDetectorProtocol {
@@ -17,31 +17,24 @@ struct FaceDetector : FaceDetectorProtocol {
     private let faceDetectionRequest = VNDetectFaceRectanglesRequest()
     private let faceDetectionHandler = VNSequenceRequestHandler()
     
-    func detectFaces(in image: CVPixelBuffer) async -> [VNFaceObservation] {
-        return await withCheckedContinuation { continuation in
-            Task {
-                do {
-                    #if targetEnvironment(simulator)
-                    if #available(iOS 17.0, *) {
-                        let allDevices = MLComputeDevice.allComputeDevices
-                        
-                        for device in allDevices {
-                            if device.description.contains("MLCPUComputeDevice") {
-                                faceDetectionRequest.setComputeDevice(.some(device), for: .main)
-                                break
-                            }
-                        }
-                    } else {
-                        faceDetectionRequest.usesCPUOnly = true
+    func detectFaces(in image: CVPixelBuffer) async throws -> [VNFaceObservation] {
+        try await Task.detached {
+            #if targetEnvironment(simulator)
+            if #available(iOS 17.0, *) {
+                let allDevices = MLComputeDevice.allComputeDevices
+                
+                for device in allDevices {
+                    if device.description.contains("MLCPUComputeDevice") {
+                        faceDetectionRequest.setComputeDevice(.some(device), for: .main)
+                        break
                     }
-                    #endif
-                    try self.faceDetectionHandler.perform([self.faceDetectionRequest], on: image)
-                    continuation.resume(returning: faceDetectionRequest.results ?? [])
-                } catch {
-                    Logger.faceDetector.error("Failed to detect faces: \(error)")
-                    continuation.resume(returning: [])
                 }
+            } else {
+                faceDetectionRequest.usesCPUOnly = true
             }
-        }
+            #endif
+            try self.faceDetectionHandler.perform([self.faceDetectionRequest], on: image)
+            return faceDetectionRequest.results ?? []
+        }.value
     }
 }

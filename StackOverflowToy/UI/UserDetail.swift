@@ -31,8 +31,8 @@ struct UserDetail: View {
                 onReset: { user in
                     viewModel?.reset(user: user)
                 },
-                onError: { error in
-                    viewModel?.onError(user: user, error: error)
+                onImageError: { error in
+                    viewModel?.onImageError(user: user, error: error)
                 }
             )
         }
@@ -48,7 +48,7 @@ struct UserDetailStateView: View {
     let onProcess: () async -> Void
     let onImageLoaded: (Image) async -> Void
     let onReset: (User) -> Void
-    let onError: (Error) -> Void
+    let onImageError: (Error) -> Void
     
     var body: some View {
         Group {
@@ -66,7 +66,7 @@ struct UserDetailStateView: View {
                         Image(systemName: "exclamationmark.circle.fill")
                             .foregroundColor(.red)
                             .task {
-                                onError(error)
+                                onImageError(error)
                             }
                     } else {
                         Image(systemName: "person.circle.fill")
@@ -188,7 +188,7 @@ enum UserDetailViewState {
     case loaded(user: User, image: Image)
     case processing(user: User, image: Image)
     case result(user: User, image: Image, confidence: Double?, boundingBox: CGRect?)
-    case error(user: User?, error: Error)
+    case error(user: User?, error: UserDetailError)
     
     func getUser() -> User? {
         switch self {
@@ -223,7 +223,7 @@ enum UserDetailViewState {
         onProcess: {},
         onImageLoaded: { _ in },
         onReset: { _ in },
-        onError: { _ in }
+        onImageError: { _ in }
     )
 }
 
@@ -233,7 +233,7 @@ enum UserDetailViewState {
         onProcess: {},
         onImageLoaded: { _ in },
         onReset: { _ in },
-        onError: { _ in }
+        onImageError: { _ in }
     )
 }
 
@@ -243,7 +243,7 @@ enum UserDetailViewState {
         onProcess: {},
         onImageLoaded: { _ in },
         onReset: { _ in },
-        onError: { _ in }
+        onImageError: { _ in }
     )
 }
 
@@ -258,7 +258,7 @@ enum UserDetailViewState {
         onProcess: {},
         onImageLoaded: { _ in },
         onReset: { _ in },
-        onError: { _ in }
+        onImageError: { _ in }
     )
 }
 
@@ -274,23 +274,33 @@ enum UserDetailViewState {
         onProcess: {},
         onImageLoaded: { _ in },
         onReset: { _ in },
-        onError: { _ in }
+        onImageError: { _ in }
     )
 }
 
-#Preview("Error") {
+#Preview("Error - image conversion failed") {
     UserDetailStateView(
         state: .error(
             user: .testUser1,
-            error: NSError(
-                domain: "com.toyapp",
-                code: -1,
-                userInfo: [NSLocalizedDescriptionKey: "Failed to process image"]
-            )
+            error: .imageConversionFailed
         ),
         onProcess: {},
         onImageLoaded: { _ in },
         onReset: { _ in },
-        onError: { _ in }
+        onImageError: { _ in }
     )
 }
+
+#Preview("Error - image download error") {
+    UserDetailStateView(
+        state: .error(
+            user: .testUser1,
+            error: .imageDownloadError(error: NSError(domain: "", code: 0, userInfo: nil))
+        ),
+        onProcess: {},
+        onImageLoaded: { _ in },
+        onReset: { _ in },
+        onImageError: { _ in }
+    )
+}
+

@@ -13,6 +13,8 @@ enum UserDetailError: LocalizedError {
     case imageConversionFailed
     case noImageAvailable
     case incorrectViewStateError(required: String, actual: String)
+    case faceDetectorError(error: Error)
+    case imageDownloadError(error: Error)
     
     var errorDescription: String? {
         switch self {
@@ -22,6 +24,10 @@ enum UserDetailError: LocalizedError {
             return NSLocalizedString("No image available", comment: "Error when trying to process without an image")
         case .incorrectViewStateError(let required, let actual):
             return NSLocalizedString("Invalid state: required \(required), got \(actual)", comment: "Error when view state is incorrect")
+        case .faceDetectorError(let error):
+            return NSLocalizedString("Error running faceDetector: \(error)", comment: "Error from FaceDetector")
+        case .imageDownloadError(let error):
+            return NSLocalizedString("Error downloading image: \(error)", comment: "Error when downloading image")
         }
     }
 }
@@ -41,8 +47,8 @@ enum UserDetailError: LocalizedError {
         self.viewState = .loading(user: user)
     }
     
-    func onError(user: User, error: Error) {
-        self.viewState = .error(user: user, error: error)
+    func onImageError(user: User, error: Error) {
+        self.viewState = .error(user: user, error: .imageDownloadError(error: error))
     }
     
     func setImage(_ image: Image) {
@@ -67,48 +73,43 @@ enum UserDetailError: LocalizedError {
         case .result(let u, let i, _, _):
             (user, image) = (u, i)
         default:
-            await MainActor.run {
-                viewState = .error(
-                    user: viewState.getUser(),
-                    error: UserDetailError.incorrectViewStateError(
-                        required: "loaded or result", actual: viewState.name()
-                    )
+            viewState = .error(
+                user: viewState.getUser(),
+                error: UserDetailError.incorrectViewStateError(
+                    required: "loaded or result", actual: viewState.name()
                 )
-            }
+            )
             return
         }
         
-        await MainActor.run {
-            viewState = .processing(user: user, image: image)
-        }
+        viewState = .processing(user: user, image: image)
         
+        guard let uiImage = await image.asUIImage(), let buffer = uiImage.toPixelBuffer() else {
+            viewState = .error(
+                user: user,
+                error: UserDetailError.imageConversionFailed
+            )
+            return
+        }
         do {
-            guard let uiImage = await image.asUIImage(), let buffer = uiImage.toPixelBuffer() else {
-                throw UserDetailError.imageConversionFailed
-            }
-            
-            let detectResult = await faceDetector.detectFaces(in: buffer)
-            await MainActor.run {
-                if let firstFace = detectResult.first {
-                    viewState = .result(
-                        user: user,
-                        image: image,
-                        confidence: Double(firstFace.confidence),
-                        boundingBox: firstFace.boundingBox
-                    )
-                } else {
-                    viewState = .result(
-                        user: user,
-                        image: image,
-                        confidence: nil,
-                        boundingBox: nil
-                    )
-                }
+            let detectResult = try await faceDetector.detectFaces(in: buffer)
+            if let firstFace = detectResult.first {
+                viewState = .result(
+                    user: user,
+                    image: image,
+                    confidence: Double(firstFace.confidence),
+                    boundingBox: firstFace.boundingBox
+                )
+            } else {
+                viewState = .result(
+                    user: user,
+                    image: image,
+                    confidence: nil,
+                    boundingBox: nil
+                )
             }
         } catch {
-            await MainActor.run {
-                viewState = .error(user: user, error: error)
-            }
+            viewState = .error(user: user, error: UserDetailError.faceDetectorError(error: error))
         }
     }
 }
